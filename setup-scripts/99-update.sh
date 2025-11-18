@@ -40,6 +40,14 @@ declare -A APPS=(
 )
 
 # ==========================================
+# Package Configuration
+# Packages that should be installed/updated
+# ==========================================
+declare -a PACKAGES=(
+    "nginx"
+)
+
+# ==========================================
 # Step 1: Git Pull
 # ==========================================
 echo "=========================================="
@@ -76,11 +84,32 @@ fi
 echo "✓ Git pull complete"
 
 # ==========================================
-# Step 2: Update Applications
+# Step 2: Update/Install Packages
 # ==========================================
 echo ""
 echo "=========================================="
-echo "Step 2: Updating applications"
+echo "Step 2: Checking system packages"
+echo "=========================================="
+
+for package in "${PACKAGES[@]}"; do
+    echo ""
+    echo "Checking: $package"
+
+    if dpkg -l | grep -q "^ii  $package "; then
+        echo "  ✓ $package is installed"
+    else
+        echo "  → Installing $package..."
+        apt-get install -y "$package"
+        echo "  ✓ $package installed"
+    fi
+done
+
+# ==========================================
+# Step 3: Update Applications
+# ==========================================
+echo ""
+echo "=========================================="
+echo "Step 3: Updating applications"
 echo "=========================================="
 
 UPDATED_SERVICES=()
@@ -132,12 +161,12 @@ for app_name in "${!APPS[@]}"; do
 done
 
 # ==========================================
-# Step 3: Restart Services
+# Step 4: Restart Services
 # ==========================================
 if [ ${#UPDATED_SERVICES[@]} -gt 0 ]; then
     echo ""
     echo "=========================================="
-    echo "Step 3: Restarting updated services"
+    echo "Step 4: Restarting updated services"
     echo "=========================================="
     
     for service in "${UPDATED_SERVICES[@]}"; do
@@ -162,7 +191,7 @@ if [ ${#UPDATED_SERVICES[@]} -gt 0 ]; then
 else
     echo ""
     echo "=========================================="
-    echo "Step 3: No services need restarting"
+    echo "Step 4: No services need restarting"
     echo "=========================================="
 fi
 
@@ -188,6 +217,7 @@ echo ""
 echo "To check service status:"
 echo "  sudo systemctl status fan_control_hwpwm.service"
 echo "  sudo systemctl status usb-auto-mount.service"
+echo "  sudo systemctl status nginx.service"
 echo ""
 
 if [ "$STASHED" = true ]; then
