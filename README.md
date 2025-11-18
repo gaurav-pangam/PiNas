@@ -21,6 +21,7 @@ PiNAS transforms a Raspberry Pi or compatible SBC into a fully functional networ
 - **Fan Control**: Hardware PWM-based temperature-controlled fan speed (GPIO 18)
 - **Static IP**: Configured for reliable network access (192.168.0.254)
 - **Remote Access**: Tailscale VPN for secure remote access
+- **Web Server**: Nginx web server for hosting web interfaces
 - **Automated Setup**: One-command installation of entire system
 - **Easy Updates**: Safe update script for existing installations
 
@@ -38,6 +39,7 @@ PiNAS/
 │   ├── 03-samba-setup.sh         # Samba file sharing setup
 │   ├── 04-tailscale-setup.sh     # Tailscale VPN setup
 │   ├── 05-fan-control-setup.sh   # Fan control setup
+│   ├── 06-nginx-setup.sh         # Nginx web server setup
 │   ├── 99-update.sh              # Update script for existing installations
 │   ├── README.md                 # Detailed setup documentation
 │   └── raw-bash-history.txt      # Original command history
@@ -74,7 +76,9 @@ sudo ./99-update.sh
 ```
 
 This will:
+
 - Pull latest changes from git
+- Check and install required system packages (nginx, etc.)
 - Update application files
 - Restart affected services
 - **Safe for production** (won't modify network/Samba/Tailscale configs)
@@ -82,28 +86,33 @@ This will:
 ## What Gets Installed
 
 ### Network Configuration
+
 - Static IP: `192.168.0.254/24`
 - Gateway: `192.168.0.1`
 - DNS: `192.168.0.1`, `8.8.8.8`
 
 ### USB Auto-Mount Service
+
 - Automatically mounts `/dev/sda1` to `/mnt/usbdrive`
 - Supports exFAT filesystem
 - Retries with delays for slow USB drives
 - Logs to `/var/log/usb-auto-mount.log`
 
 ### Samba File Sharing
+
 - Share name: `PiDrive`
 - Path: `/mnt/usbdrive`
 - Network discovery via Avahi
 - Access: `\\192.168.0.254\PiDrive` or `\\raspberrypi\PiDrive`
 
 ### Tailscale VPN
+
 - Secure remote access
 - Access your NAS from anywhere
 - Manual authentication required during setup
 
 ### Hardware PWM Fan Control
+
 - GPIO 18 (Hardware PWM0)
 - Temperature-based speed control:
   - OFF: ≤ 37°C
@@ -112,26 +121,36 @@ This will:
 - PWM Frequency: 100Hz
 - Logs to `/home/gaurav/fan_control_hwpwm.log`
 
+### Nginx Web Server
+
+- Installed and enabled on port 80
+- Can be configured as reverse proxy or static file server
+- Config: `/etc/nginx/sites-available/default`
+
 ## Usage
 
 ### Accessing Your NAS
 
 **From Windows:**
+
 ```
 \\192.168.0.254\PiDrive
 ```
 
 **From macOS:**
+
 ```
 smb://192.168.0.254/PiDrive
 ```
 
 **From Linux:**
+
 ```
 smb://192.168.0.254/PiDrive
 ```
 
 **Credentials:**
+
 - Username: `gaurav`
 - Password: (set during Samba setup)
 
@@ -143,11 +162,13 @@ sudo systemctl status usb-auto-mount.service
 sudo systemctl status fan_control_hwpwm.service
 sudo systemctl status smbd
 sudo systemctl status tailscaled
+sudo systemctl status nginx
 
 # Restart services
 sudo systemctl restart usb-auto-mount.service
 sudo systemctl restart fan_control_hwpwm.service
 sudo systemctl restart smbd
+sudo systemctl restart nginx
 
 # View logs
 sudo tail -f /var/log/usb-auto-mount.log
@@ -170,11 +191,25 @@ When adding new applications to PiNAS:
 
 1. Add application files to `applications/` directory
 2. Create setup script in `setup-scripts/`
-3. Update the `APPS` array in `setup-scripts/99-update.sh`:
+3. Update the appropriate section in `setup-scripts/99-update.sh`:
+
+**For applications with files:**
 
 ```bash
 ["app_name"]="applications/source.py|/destination/path|service-name.service|yes/no"
 ```
+
+**For system packages:**
+
+```bash
+PACKAGES=(
+    "nginx"
+    "package-name"
+)
+```
+
+4. Update both `README.md` files (root and `setup-scripts/README.md`)
+5. Update `setup-scripts/00-install-all.sh` to include the new script
 
 This ensures the update script will manage the new application automatically.
 
