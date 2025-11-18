@@ -4,6 +4,8 @@ This directory contains setup scripts to configure a Raspberry Pi as a Network A
 
 ## Quick Start
 
+### Fresh Installation
+
 After cloning this repository on a fresh Raspberry Pi OS installation:
 
 ```bash
@@ -13,9 +15,40 @@ sudo ./00-install-all.sh
 
 This will run all setup scripts in order and configure the entire system.
 
+### Updating Existing Installation
+
+To update an already-configured PiNAS system with the latest changes:
+
+```bash
+cd PiNAS/setup-scripts
+sudo ./99-update.sh
+```
+
+This will:
+- Pull latest changes from git
+- Update application files
+- Restart affected services
+- **Safe to run on production systems** (won't touch network/Samba/Tailscale configs)
+
 ## Individual Setup Scripts
 
 You can also run individual scripts if you only need specific functionality:
+
+### 0. Update Script (`99-update.sh`)
+
+**For existing installations only** - Updates applications and services without touching system configuration.
+
+- Pulls latest code from git
+- Updates application files (fan control, USB mount, etc.)
+- Restarts only affected services
+- Safe for production systems
+- Skips network, Samba, and Tailscale configs
+
+**Usage:**
+
+```bash
+sudo ./99-update.sh
+```
 
 ### 1. Network Configuration (`01-network-config.sh`)
 
@@ -145,6 +178,7 @@ dtoverlay=pwm,pin=18,func=2
 - Scripts will backup configuration files before modifying
 - Some scripts require a reboot to take full effect
 - The master script (`00-install-all.sh`) will prompt for reboot at the end
+- Use `99-update.sh` for updating existing installations
 
 ## Troubleshooting
 
@@ -172,3 +206,17 @@ sudo systemctl restart usb-auto-mount.service
 sudo systemctl restart fan_control_hwpwm.service
 sudo systemctl restart smbd
 ```
+
+## Adding New Applications
+
+When adding new applications to PiNAS, update the `99-update.sh` script:
+
+1. Add application files to `applications/` directory
+2. Create setup script in `setup-scripts/`
+3. Update the `APPS` array in `99-update.sh`:
+
+```bash
+["app_name"]="applications/source.py|/destination/path|service-name.service|yes/no"
+```
+
+This ensures the update script will manage the new application automatically.

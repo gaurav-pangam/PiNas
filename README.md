@@ -22,6 +22,7 @@ PiNAS transforms a Raspberry Pi or compatible SBC into a fully functional networ
 - **Static IP**: Configured for reliable network access (192.168.0.254)
 - **Remote Access**: Tailscale VPN for secure remote access
 - **Automated Setup**: One-command installation of entire system
+- **Easy Updates**: Safe update script for existing installations
 
 ## Repository Structure
 
@@ -37,8 +38,10 @@ PiNAS/
 │   ├── 03-samba-setup.sh         # Samba file sharing setup
 │   ├── 04-tailscale-setup.sh     # Tailscale VPN setup
 │   ├── 05-fan-control-setup.sh   # Fan control setup
+│   ├── 99-update.sh              # Update script for existing installations
 │   ├── README.md                 # Detailed setup documentation
 │   └── raw-bash-history.txt      # Original command history
+├── QUICK_START.md         # Quick start guide
 └── README.md              # This file
 ```
 
@@ -49,7 +52,7 @@ PiNAS/
 1. **Flash Raspberry Pi OS** to your SD card
 2. **Clone this repository:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/gaurav-pangam/PiNas.git
    cd PiNAS
    ```
 3. **Run the master setup script:**
@@ -58,67 +61,141 @@ PiNAS/
    sudo ./00-install-all.sh
    ```
 4. **Reboot** when prompted
-5. **Access your NAS** via network discovery or `\\192.168.0.254\PiDrive`
 
-### Individual Component Setup
+See [QUICK_START.md](QUICK_START.md) for detailed instructions.
 
-You can also install components individually. See [setup-scripts/README.md](setup-scripts/README.md) for details.
+### Updating Existing Installation
 
-## Applications
+To update your already-configured PiNAS:
 
-### Fan Control (Hardware PWM)
+```bash
+cd PiNAS/setup-scripts
+sudo ./99-update.sh
+```
 
-- Temperature-based fan speed control using GPIO 18
-- Fan OFF below 37°C, MAX at 45°C
-- Linear scaling between thresholds
-- 100Hz PWM frequency for silent operation
-- Logs to `/home/gaurav/fan_control_hwpwm.log`
+This will:
+- Pull latest changes from git
+- Update application files
+- Restart affected services
+- **Safe for production** (won't modify network/Samba/Tailscale configs)
 
-### USB Auto-Mount
+## What Gets Installed
 
-- Automatically mounts `/dev/sda1` to `/mnt/usbdrive` on boot
+### Network Configuration
+- Static IP: `192.168.0.254/24`
+- Gateway: `192.168.0.1`
+- DNS: `192.168.0.1`, `8.8.8.8`
+
+### USB Auto-Mount Service
+- Automatically mounts `/dev/sda1` to `/mnt/usbdrive`
 - Supports exFAT filesystem
-- Retry logic for slow USB drives
+- Retries with delays for slow USB drives
 - Logs to `/var/log/usb-auto-mount.log`
 
-## System Configuration
+### Samba File Sharing
+- Share name: `PiDrive`
+- Path: `/mnt/usbdrive`
+- Network discovery via Avahi
+- Access: `\\192.168.0.254\PiDrive` or `\\raspberrypi\PiDrive`
 
-### Network
+### Tailscale VPN
+- Secure remote access
+- Access your NAS from anywhere
+- Manual authentication required during setup
 
-- **Static IP**: 192.168.0.254/24
-- **Gateway**: 192.168.0.1
-- **DNS**: 192.168.0.1, 8.8.8.8
+### Hardware PWM Fan Control
+- GPIO 18 (Hardware PWM0)
+- Temperature-based speed control:
+  - OFF: ≤ 37°C
+  - MAX: ≥ 45°C
+  - Linear scaling between thresholds
+- PWM Frequency: 100Hz
+- Logs to `/home/gaurav/fan_control_hwpwm.log`
 
-### Samba Share
+## Usage
 
-- **Share Name**: PiDrive
-- **Path**: /mnt/usbdrive
-- **User**: gaurav
+### Accessing Your NAS
 
-### Performance Settings
+**From Windows:**
+```
+\\192.168.0.254\PiDrive
+```
 
-- **CPU Frequency**: 1200 MHz
-- **Over Voltage**: +2
-- **GPU Memory**: 16 MB (minimal for headless operation)
+**From macOS:**
+```
+smb://192.168.0.254/PiDrive
+```
 
-## Network Access
+**From Linux:**
+```
+smb://192.168.0.254/PiDrive
+```
 
-Once configured, the NAS can be accessed via:
+**Credentials:**
+- Username: `gaurav`
+- Password: (set during Samba setup)
 
-- **Windows**: `\\192.168.0.254\PiDrive` or `\\raspberrypi\PiDrive`
-- **macOS**: Finder → Network or `smb://192.168.0.254/PiDrive`
-- **Linux**: File Manager → Network or `smb://192.168.0.254/PiDrive`
-- **Mobile**: File manager apps with SMB/CIFS support
-- **Remote**: Via Tailscale VPN from anywhere
+### Managing Services
+
+```bash
+# Check service status
+sudo systemctl status usb-auto-mount.service
+sudo systemctl status fan_control_hwpwm.service
+sudo systemctl status smbd
+sudo systemctl status tailscaled
+
+# Restart services
+sudo systemctl restart usb-auto-mount.service
+sudo systemctl restart fan_control_hwpwm.service
+sudo systemctl restart smbd
+
+# View logs
+sudo tail -f /var/log/usb-auto-mount.log
+tail -f ~/fan_control_hwpwm.log
+sudo journalctl -u fan_control_hwpwm.service -f
+```
+
+## Customization
+
+All scripts are designed to be easily customizable:
+
+- **Static IP**: Edit `setup-scripts/01-network-config.sh`
+- **USB Device**: Edit `applications/usb-auto-mount.sh` (change `/dev/sda1`)
+- **Fan Temperatures**: Edit `applications/fan_control_hwpwm.py` (FAN_OFF_TEMP, MAX_TEMP)
+- **Share Name**: Edit `setup-scripts/03-samba-setup.sh` (SHARE_NAME)
+
+## Adding New Applications
+
+When adding new applications to PiNAS:
+
+1. Add application files to `applications/` directory
+2. Create setup script in `setup-scripts/`
+3. Update the `APPS` array in `setup-scripts/99-update.sh`:
+
+```bash
+["app_name"]="applications/source.py|/destination/path|service-name.service|yes/no"
+```
+
+This ensures the update script will manage the new application automatically.
+
+## Documentation
+
+- [Quick Start Guide](QUICK_START.md) - Fast setup instructions
+- [Setup Scripts README](setup-scripts/README.md) - Detailed script documentation
+- [Raw Bash History](setup-scripts/raw-bash-history.txt) - Original command history
 
 ## Troubleshooting
 
-See [setup-scripts/README.md](setup-scripts/README.md) for detailed troubleshooting steps, including:
-
-- Checking service status
-- Viewing logs
-- Restarting services
+See the [Troubleshooting section](setup-scripts/README.md#troubleshooting) in the setup scripts README.
 
 ## License
 
-This project is open source and available for personal use.
+This project is open source and available for personal and educational use.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit pull requests or open issues.
+
+## Author
+
+Gaurav Pangam

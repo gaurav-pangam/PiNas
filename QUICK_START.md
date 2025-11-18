@@ -1,6 +1,6 @@
 # PiNAS Quick Start Guide
 
-## One-Command Setup
+## Fresh Installation - One-Command Setup
 
 After cloning this repo on a fresh Raspberry Pi OS:
 
@@ -17,9 +17,24 @@ That's it! The script will:
 4. ✅ Install Tailscale VPN
 5. ✅ Setup hardware PWM fan control
 
+## Updating Existing Installation
+
+To update your already-configured PiNAS with latest changes:
+
+```bash
+cd PiNAS/setup-scripts
+sudo ./99-update.sh
+```
+
+This will:
+- Pull latest code from git
+- Update application files
+- Restart affected services
+- **Safe for production** (won't touch network/Samba/Tailscale configs)
+
 ## What You'll Need to Provide
 
-During setup, you'll be prompted for:
+During **fresh** setup, you'll be prompted for:
 
 - **Samba password** (for network share access)
 - **Tailscale auth command** (get from https://login.tailscale.com/admin/machines)
