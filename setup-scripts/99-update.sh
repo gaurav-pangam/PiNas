@@ -12,7 +12,7 @@ echo "PiNAS Update Script"
 echo "=========================================="
 
 # Check if running as root
-if [ "$EUID" -ne 0 ]; then 
+if [ "$EUID" -ne 0 ]; then
     echo "Please run as root (use sudo)"
     exit 1
 fi
@@ -20,6 +20,7 @@ fi
 # Get the script directory and repo root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+SCRIPT_PATH="${BASH_SOURCE[0]}"
 
 # Store original user
 ORIGINAL_USER="${SUDO_USER:-gaurav}"
@@ -78,6 +79,9 @@ else
     STASHED=false
 fi
 
+# Calculate checksum of this script before pull
+SCRIPT_CHECKSUM_BEFORE=$(md5sum "$SCRIPT_PATH" | cut -d' ' -f1)
+
 # Pull latest changes
 echo "Pulling latest changes..."
 sudo -u "$ORIGINAL_USER" git pull origin main
@@ -88,6 +92,18 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "✓ Git pull complete"
+
+# Check if this script itself was updated
+SCRIPT_CHECKSUM_AFTER=$(md5sum "$SCRIPT_PATH" | cut -d' ' -f1)
+
+if [ "$SCRIPT_CHECKSUM_BEFORE" != "$SCRIPT_CHECKSUM_AFTER" ] && [ "$PINAS_UPDATE_REEXEC" != "1" ]; then
+    echo ""
+    echo "⚠ Update script itself was modified!"
+    echo "→ Re-executing with new version..."
+    echo ""
+    export PINAS_UPDATE_REEXEC=1
+    exec bash "$SCRIPT_PATH" "$@"
+fi
 
 # ==========================================
 # Step 2: Update/Install Packages
