@@ -19,6 +19,7 @@ PiNAS transforms a Raspberry Pi or compatible SBC into a fully functional networ
 - **Cross-Platform Access**: Access from Windows, macOS, Linux, Android, and iOS devices
 - **Auto-Mount**: Automatic USB hard drive detection and mounting with exFAT support
 - **Fan Control**: Hardware PWM-based temperature-controlled fan speed (GPIO 18)
+- **System Monitor**: Web-based dashboard for real-time system monitoring
 - **Static IP**: Configured for reliable network access (192.168.0.254)
 - **Remote Access**: Tailscale VPN for secure remote access
 - **Web Server**: Nginx web server for hosting web interfaces
@@ -31,6 +32,10 @@ PiNAS transforms a Raspberry Pi or compatible SBC into a fully functional networ
 PiNAS/
 ├── applications/          # Application files
 │   ├── fan_control_hwpwm.py      # Hardware PWM fan controller
+│   ├── homepage/                 # System monitor web dashboard
+│   │   ├── server.py             # Lightweight Python web server
+│   │   ├── index.html            # Dashboard frontend
+│   │   └── pinas-homepage.service # Systemd service file
 │   └── usb-auto-mount.sh         # USB auto-mount script
 ├── setup-scripts/         # Setup and installation scripts
 │   ├── 00-install-all.sh         # Master setup script (runs all)
@@ -40,6 +45,7 @@ PiNAS/
 │   ├── 04-tailscale-setup.sh     # Tailscale VPN setup
 │   ├── 05-fan-control-setup.sh   # Fan control setup
 │   ├── 06-nginx-setup.sh         # Nginx web server setup
+│   ├── 07-homepage-setup.sh      # System monitor homepage setup
 │   ├── 99-update.sh              # Update script for existing installations
 │   ├── README.md                 # Detailed setup documentation
 │   └── raw-bash-history.txt      # Original command history
@@ -127,6 +133,21 @@ This will:
 - Can be configured as reverse proxy or static file server
 - Config: `/etc/nginx/sites-available/default`
 
+### System Monitor Homepage
+
+- Web-based real-time system monitoring dashboard
+- Access: `http://192.168.0.254:8080`
+- Features:
+  - CPU Temperature & Fan Speed
+  - CPU Frequency (per-core and average)
+  - RAM Usage
+  - Network Statistics (RX/TX with rates)
+  - Top Processes by CPU usage
+  - Configurable refresh rate (1-30 seconds)
+- Lightweight Python server (no external dependencies)
+- Mobile responsive design
+- btop-inspired terminal aesthetic
+
 ## Usage
 
 ### Accessing Your NAS
@@ -160,6 +181,7 @@ smb://192.168.0.254/PiDrive
 # Check service status
 sudo systemctl status usb-auto-mount.service
 sudo systemctl status fan_control_hwpwm.service
+sudo systemctl status pinas-homepage.service
 sudo systemctl status smbd
 sudo systemctl status tailscaled
 sudo systemctl status nginx
@@ -167,6 +189,7 @@ sudo systemctl status nginx
 # Restart services
 sudo systemctl restart usb-auto-mount.service
 sudo systemctl restart fan_control_hwpwm.service
+sudo systemctl restart pinas-homepage.service
 sudo systemctl restart smbd
 sudo systemctl restart nginx
 
@@ -174,6 +197,7 @@ sudo systemctl restart nginx
 sudo tail -f /var/log/usb-auto-mount.log
 tail -f ~/fan_control_hwpwm.log
 sudo journalctl -u fan_control_hwpwm.service -f
+sudo journalctl -u pinas-homepage.service -f
 ```
 
 ## Customization
@@ -193,10 +217,16 @@ When adding new applications to PiNAS:
 2. Create setup script in `setup-scripts/`
 3. Update the appropriate section in `setup-scripts/99-update.sh`:
 
-**For applications with files:**
+**For single-file applications:**
 
 ```bash
 ["app_name"]="applications/source.py|/destination/path|service-name.service|yes/no"
+```
+
+**For directory-based applications:**
+
+```bash
+["app_name"]="applications/source_dir|/destination/dir|service-name.service"
 ```
 
 **For system packages:**

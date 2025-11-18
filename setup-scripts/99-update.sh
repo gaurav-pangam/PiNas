@@ -39,6 +39,12 @@ declare -A APPS=(
     ["usb_mount"]="applications/usb-auto-mount.sh|/usr/local/bin/usb-auto-mount.sh|usb-auto-mount.service|yes"
 )
 
+# Homepage is a directory-based application, handled separately
+declare -A DIR_APPS=(
+    # Format: ["app_name"]="source_dir|destination_dir|service_name"
+    ["homepage"]="applications/homepage|/home/$ORIGINAL_USER/applications/homepage|pinas-homepage.service"
+)
+
 # ==========================================
 # Package Configuration
 # Packages that should be installed/updated
@@ -160,6 +166,50 @@ for app_name in "${!APPS[@]}"; do
     fi
 done
 
+# Update directory-based applications
+for app_name in "${!DIR_APPS[@]}"; do
+    IFS='|' read -r source dest service <<< "${DIR_APPS[$app_name]}"
+
+    echo ""
+    echo "Updating: $app_name (directory)"
+    echo "  Source: $source"
+    echo "  Destination: $dest"
+
+    # Check if source directory exists
+    if [ ! -d "$REPO_ROOT/$source" ]; then
+        echo "  ⚠ Source directory not found, skipping..."
+        continue
+    fi
+
+    # Check if destination exists (service might not be installed)
+    if [ ! -d "$dest" ]; then
+        echo "  ⚠ Destination not found (service not installed?), skipping..."
+        continue
+    fi
+
+    # Compare directories to see if update is needed
+    # Use rsync dry-run to check for differences
+    if rsync -avn --delete "$REPO_ROOT/$source/" "$dest/" | grep -q '^deleting\|^>'; then
+        echo "  → Updating directory..."
+        rsync -av --delete "$REPO_ROOT/$source/" "$dest/"
+        chown -R "$ORIGINAL_USER:$ORIGINAL_USER" "$dest"
+
+        # Make server.py executable if it exists
+        if [ -f "$dest/server.py" ]; then
+            chmod +x "$dest/server.py"
+        fi
+
+        echo "  ✓ Directory updated"
+
+        # Add to list of services to restart
+        if [ -n "$service" ]; then
+            UPDATED_SERVICES+=("$service")
+        fi
+    else
+        echo "  ✓ Already up to date"
+    fi
+done
+
 # ==========================================
 # Step 4: Restart Services
 # ==========================================
@@ -217,6 +267,7 @@ echo ""
 echo "To check service status:"
 echo "  sudo systemctl status fan_control_hwpwm.service"
 echo "  sudo systemctl status usb-auto-mount.service"
+echo "  sudo systemctl status pinas-homepage.service"
 echo "  sudo systemctl status nginx.service"
 echo ""
 

@@ -1,0 +1,14 @@
+[Unit]
+Description=PiNAS System Monitor Homepage
+After=network.target
+
+[Service]
+Type=simple
+User=gaurav
+WorkingDirectory=/home/gaurav/applications/homepage
+ExecStart=/usr/bin/python3 /home/gaurav/applications/homepage/server.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
