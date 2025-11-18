@@ -25,7 +25,9 @@ sudo ./99-update.sh
 ```
 
 This will:
+
 - Pull latest changes from git
+- Check and install required system packages (nginx, etc.)
 - Update application files
 - Restart affected services
 - **Safe to run on production systems** (won't touch network/Samba/Tailscale configs)
@@ -39,6 +41,7 @@ You can also run individual scripts if you only need specific functionality:
 **For existing installations only** - Updates applications and services without touching system configuration.
 
 - Pulls latest code from git
+- Checks and installs required system packages (nginx, etc.)
 - Updates application files (fan control, USB mount, etc.)
 - Restarts only affected services
 - Safe for production systems
@@ -125,6 +128,21 @@ sudo ./05-fan-control-setup.sh
 
 **Logs:** `/home/gaurav/fan_control_hwpwm.log`
 
+### 6. Nginx Web Server (`06-nginx-setup.sh`)
+
+- Installs nginx web server
+- Enables and starts nginx service
+- Default configuration listens on port 80
+- Can be configured as reverse proxy or static file server
+
+**Usage:**
+
+```bash
+sudo ./06-nginx-setup.sh
+```
+
+**Config:** `/etc/nginx/sites-available/default`
+
 ## Configuration Details
 
 ### Network
@@ -189,6 +207,7 @@ sudo systemctl status usb-auto-mount.service
 sudo systemctl status fan_control_hwpwm.service
 sudo systemctl status smbd
 sudo systemctl status tailscaled
+sudo systemctl status nginx
 ```
 
 ### View logs:
@@ -213,10 +232,24 @@ When adding new applications to PiNAS, update the `99-update.sh` script:
 
 1. Add application files to `applications/` directory
 2. Create setup script in `setup-scripts/`
-3. Update the `APPS` array in `99-update.sh`:
+3. Update the appropriate section in `99-update.sh`:
+
+**For applications with files:**
 
 ```bash
 ["app_name"]="applications/source.py|/destination/path|service-name.service|yes/no"
 ```
+
+**For system packages:**
+
+```bash
+PACKAGES=(
+    "nginx"
+    "package-name"
+)
+```
+
+4. Update `setup-scripts/README.md` to document the new setup script
+5. Update `setup-scripts/00-install-all.sh` to include the new script in the installation sequence
 
 This ensures the update script will manage the new application automatically.
