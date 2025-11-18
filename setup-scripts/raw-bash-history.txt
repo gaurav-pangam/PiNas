@@ -1,0 +1,897 @@
+lsblk
+exit
+lsblk
+sudo reboot
+lsblk
+curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh | bash
+sudo tee /etc/systemd/system/filebrowser.service > /dev/null <<'EOF'
+[Unit]
+Description=File Browser
+After=network.target
+
+[Service]
+User=pi
+ExecStart=/usr/local/bin/filebrowser -r /mnt/usbdrive --address 0.0.0.0 --port 8080
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable filebrowser
+sudo systemctl start filebrowser
+sudo systemctl status filebrowser
+sudo sed -i 's/^User=.*$/User=gaurav/' /etc/systemd/system/filebrowser.service || sudo tee /etc/systemd/system/filebrowser.service > /dev/null <<'EOF'
+[Unit]
+Description=File Browser
+After=network.target
+
+[Service]
+User=gaurav
+ExecStart=/usr/local/bin/filebrowser -r /mnt/usbdrive --address 0.0.0.0 --port 8080
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo mkdir -p /mnt/usbdrive
+sudo chown -R gaurav:gaurav /mnt/usbdrive
+sudo systemctl daemon-reload
+sudo systemctl restart filebrowser
+sudo systemctl status filebrowser --no-pager
+sudo journalctl -u filebrowser -n 100 --no-pager
+sudo mkdir -p /var/lib/filebrowser
+sudo chown -R gaurav:gaurav /var/lib/filebrowser
+sudo nano /etc/systemd/system/filebrowser.service
+sudo systemctl daemon-reload
+sudo systemctl restart filebrowser
+sudo systemctl stop filebrowser
+/usr/local/bin/filebrowser users update admin --password NEWPASSWORD --database /var/lib/filebrowser/filebrowser.db
+/usr/local/bin/filebrowser users update admin --password Nf7$Rd9qLp2! --database /var/lib/filebrowser/filebrowser.db
+sudo systemctl stop filebrowser
+/usr/local/bin/filebrowser users update admin --password fT7x@wB2rQzP --database /var/lib/filebrowser/filebrowser.db
+sudo systemctl start filebrowser
+exit
+sudo systemctl is-enabled filebrowser
+sudo tee /usr/local/bin/usb-auto-mount.sh > /dev/null <<'EOF'
+#!/bin/bash
+LOGFILE="/var/log/usb-auto-mount.log"
+MOUNTPOINT="/mnt/usbdrive"
+DEVICE="/dev/sda1"
+RETRIES=100
+DELAY=10
+
+mkdir -p "$MOUNTPOINT"
+echo "==== $(date) : Starting USB auto-mount ====" >> "$LOGFILE"
+
+# Wait ~2–3 minutes after boot
+sleep 120
+
+for ((i=1; i<=RETRIES; i++)); do
+    if [ -b "$DEVICE" ]; then
+        echo "$(date): Attempt $i - Found $DEVICE, mounting..." >> "$LOGFILE"
+        if mountpoint -q "$MOUNTPOINT"; then
+            echo "$(date): Already mounted." >> "$LOGFILE"
+            exit 0
+        fi
+        sudo mount "$DEVICE" "$MOUNTPOINT" && {
+            echo "$(date): Mounted successfully on $MOUNTPOINT" >> "$LOGFILE"
+            chown -R gaurav:gaurav "$MOUNTPOINT"
+            exit 0
+        }
+        echo "$(date): Mount failed, retrying..." >> "$LOGFILE"
+    else
+        echo "$(date): Attempt $i - Device not found, retrying..." >> "$LOGFILE"
+    fi
+    sleep "$DELAY"
+done
+
+echo "$(date): Failed to mount after $RETRIES attempts." >> "$LOGFILE"
+exit 1
+EOF
+
+sudo chmod +x /usr/local/bin/usb-auto-mount.sh
+sudo tee /etc/systemd/system/usb-auto-mount.service > /dev/null <<'EOF'
+[Unit]
+Description=Auto mount USB hard drive with retry
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/usb-auto-mount.sh
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable usb-auto-mount
+sudo systemctl start usb-auto-mount
+sudo tail -f /var/log/usb-auto-mount.log
+sudo dd if=/dev/mmcblk0 of=/mnt/usbdrive/pi_os_backup_$(date +%Y%m%d).img bs=4M status=progress
+sync
+mount | grep usbdrive
+ls -lh /mnt/usbdrive
+touch /mnt/usbdrive/testfile && echo ok && rm /mnt/usbdrive/testfile
+exit
+sudo apt install -y btop
+btop
+sudo nano /boot/firmware/config.txt
+btop
+lsblk
+sudo tail -f /var/log/usb-auto-mount.log
+sudo dd if=/dev/mmcblk0 of=/mnt/usbdrive/pi_os_backup_$(date +%Y%m%d).img bs=4M status=progress
+exit
+sudo reboot
+sudo nano /usr/local/bin/usb-auto-mount.sh
+sudo reboot
+btop
+sudo tail -f /var/log/usb-auto-mount.log
+sudo apt install -y stress
+stress --cpu 4 --timeout 300
+sudo nano /boot/firmware/config.txt
+sudo reboot
+sudo tail -f /var/log/usb-auto-mount.log
+exit
+nano /home/pi/fan_control.py
+nano /home/gaurav/fan_control.py
+chmod +x /home/gaurav/fan_control.py
+sudo nano /etc/systemd/system/fan_control.service
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl enable fan_control.service
+sudo systemctl start fan_control.service
+sudo systemctl status fan_control.service
+cat /home/gaurav/fan_control.log
+python3 /home/gaurav/fan_control.py
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+exit
+btop
+exit
+btop
+stress --cpu 4 --timeout 300
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+stress --cpu 4 --timeout 300
+exit
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+exit
+btop
+sudo systemctl restart fan_control.service
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+sudo systemctl stop fan_control.service
+nano /home/gaurav/fan_control.py
+python3 /home/gaurav/fan_control.py
+nano /home/gaurav/fan_control.py
+python3 /home/gaurav/fan_control.py
+nano /home/gaurav/fan_control.py
+python3 /home/gaurav/fan_control.py
+nano /home/gaurav/fan_control.py
+sudo apt install pigpio python3-pigpio
+sudo systemctl start pigpiod
+sudo apt update
+sudo apt install pigpio python3-pigpio
+sudo systemctl start pigpiod
+nano /home/gaurav/fan_control.py
+python3 /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+exit
+btop
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+btop
+exit
+htop
+vcgencmd measure_temp
+exit
+mount | grep /dev/sd
+ls -ld /media/usb /mnt /path/to/your/drive
+ps aux | grep filebrowser
+sudo chown -R gaurav:gaurav /mnt/usbdrive
+sudo nano /usr/local/bin/usb-auto-mount.sh
+sudo reboot
+sudo tail -f /var/log/usb-auto-mount.log
+exit
+sudo systemctl edit filebrowser.service
+# 1. Check if it's managed by systemd
+systemctl status filebrowser
+# 2. If not found, check if it's running manually or via cron
+ps aux | grep filebrowser
+sudo systemctl edit filebrowser.service
+sudo systemctl daemon-reload
+sudo systemctl restart filebrowser
+sudo systemctl status filebrowser.service
+# 1. Show the override file
+sudo cat /etc/systemd/system/filebrowser.service.d/override.conf
+# 2. Check the exact error from the log77
+sudo journalctl -u filebrowser.service -n 20
+sudo rm /etc/systemd/system/filebrowser.service.d/override.conf
+sudo systemctl daemon-reload
+sudo systemctl restart filebrowser
+sudo systemctl status filebrowser.service
+btop
+exit
+lsblk -nrpo NAME,FSTYPE,LABEL,SIZE,MOUNTPOINT | awk '$1 ~ /\/dev\/sd/ {printf "%-12s %-8s %-16s %-8s -> %s\n",$1,$2,$3,$4,$5}'
+sudo apt update
+sudo apt install -y samba
+ls -ld /mnt/usbdrive
+sudo nano /etc/samba/smb.conf
+sudo smbpasswd -a gaurav
+sudo systemctl restart smbd
+sudo apt install -y avahi-daemon
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+systemctl status avahi-daemon | grep Active
+hostname
+btop
+exit
+btop
+exit
+curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up --auth-key=tskey-auth-kLFCRfE5ZV11CNTRL-yqVcYN8oYf3NgBRLWVPhf3vdXJ3EtkeRA
+tailscale up
+sudo tailscale set --operator=$USER
+tailscale up
+tailscale up --advertise-exit-node
+tailscale up
+tailscale down
+tailscale up
+tailscale up --accept-routes
+tailscale up --accept-routes=true
+tailscale up
+sudo systemctl enable tailscaled
+sudo systemctl start tailscaled
+exit
+sudo reboot
+btop
+exit
+btop
+exit
+tailscale up --advertise-exit-node=false
+sudo nano /etc/dhcpcd.conf
+sudo systemctl restart dhcpcd
+sudo nano /etc/dhcpcd.conf
+systemctl list-unit-files | grep -E "dhcpcd|NetworkManager|systemd-networkd"
+nmcli connection show
+sudo nmcli connection modify "preconfigured"   ipv4.addresses 192.168.0.254/24   ipv4.gateway 192.168.0.1   ipv4.dns "192.168.0.1 8.8.8.8"   ipv4.method manual   ipv4.may-fail yes   ipv4.never-default no
+exit
+sudo reboot
+exit
+btop
+exit
+btop
+sudo systemctl edit filebrowser.service
+systemctl status filebrowser
+sudo systemctl stop filebrowser
+sudo systemctl disable filebrowser
+btop
+sudo rm /etc/systemd/system/filebrowser.service
+sudo systemctl daemon-reload
+btop
+ls /usr/local/bin/filebrowser
+sudo rm /usr/local/bin/filebrowser
+sudo rm -rf /var/lib/filebrowser
+sudo rm -rf ~/.filebrowser.json ~/.filebrowser.db
+systemctl status filebrowser
+dpkg -l | grep filebrowser
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+btop
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+btop
+exit
+btop
+exit
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+btop
+sudo systemctl stop fan_control.service
+btop
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+btop
+stress --cpu 4 --timeout 300
+exit
+stress --cpu 4 --timeout 300
+nano /home/gaurav/fan_control.py
+exit
+btop
+exit
+btop
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+btop
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+btop
+nano /home/gaurav/fan_control.py
+sudo reboot
+stress --cpu 4 --timeout 300
+which pigpiod && python3 -c "import pigpio; print('pigpio module installed')" || echo "Need to install pigpio"
+sudo apt update && sudo apt install -y pigpio python3-pigpio
+apt-cache search pigpio
+sudo apt install -y pigpio-tools python3-pigpio
+sudo pigpiod
+dpkg -L pigpio-tools | grep bin
+pip3 install rpi-hardware-pwm --break-system-packages
+python3 -m pip install rpi-hardware-pwm --break-system-packages
+sudo nano /home/gaurav/fan_control_hwpwm.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan-control-hwpwm.service
+tail -20 /home/gaurav/fan_control.log
+sudo systemctl stop fan_control.service
+sudo systemctl restart fan_control.service
+tail -30 /home/gaurav/fan_control.log
+cat /home/gaurav/fan_control_hwpwm.py
+sudo systemctl restart fan-control-hwpwm
+tail -10 /home/gaurav/fan_control.log
+sudo systemctl status fan-control.service | head -20
+ps aux | grep fan_control
+sudo reboot
+ls -la /sys/class/pwm/
+sudo systemctl status fan-control-hwpwm
+sudo systemctl start fan-control-hwpwm
+tail -15 /home/gaurav/fan_control.log
+ps aux | grep fan_control
+sudo kill 858
+sudo systemctl list-units | grep fan
+sudo systemctl stop fan_control.service && sudo systemctl disable fan_control.service
+ps aux | grep fan_control
+tail -10 /home/gaurav/fan_control.log
+which btop
+ls /sys/class/hwmon/
+cat /sys/class/hwmon/hwmon0/name
+ls /sys/class/hwmon/hwmon0/
+cat /home/gaurav/fan_control_hwpwm.py
+nano /home/gaurav/fan_control_hwpwm.py
+cp /home/gaurav/fan_control_hwpwm.py /home/gaurav/fan_control_hwpwm.py.backup
+sed -i '/logging.info(f"CPU Temp: {cpu_temp/a\        try:\n            with open("/run/fan_duty", "w") as f:\n                f.write(f"{duty_cycle:.1f}")\n        except:\n            pass' /home/gaurav/fan_control_hwpwm.py
+grep -A 5 "logging.info" /home/gaurav/fan_control_hwpwm.py | tail -15
+sudo systemctl restart fan-control-hwpwm
+cat /run/fan_duty
+ls ~/.config/btop/
+sudo tee /usr/local/bin/fan > /dev/null << 'EOF'
+#!/bin/bash
+if [ -f /run/fan_duty ]; then
+    duty=$(cat /run/fan_duty)
+    echo "Fan: ${duty}%"
+else
+    echo "Fan: N/A"
+fi
+EOF
+
+sudo chmod +x /usr/local/bin/fan && fan
+rm -f /tmp/fan_update.py /usr/local/bin/fan.tmp
+watch -n 1 'echo "CPU Temp: $(cat /sys/class/thermal/thermal_zone0/temp | awk "{print \$1/1000}")°C | Fan: $(cat /run/fan_duty)%"'
+sudo systemctl status fan-control-hwpwm
+cat /sys/class/pwm/pwmchip0/pwm0/duty_cycle && cat /sys/class/pwm/pwmchip0/pwm0/period && cat /sys/class/pwm/pwmchip0/pwm0/enable
+cat /sys/class/thermal/thermal_zone0/temp
+tail -20 /home/gaurav/fan_control.log
+gpio -g mode 18 out && gpio -g write 18 1
+ls -la /sys/class/pwm/pwmchip0/
+cat /sys/kernel/debug/pinctrl/3f200000.gpio-pinctrl-bcm2835/pinmux-pins | grep "pin 18"
+echo 0 | sudo tee /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+echo 40000 | sudo tee /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+cat /sys/class/pwm/pwmchip0/pwm0/polarity
+echo "inversed" | sudo tee /sys/class/pwm/pwmchip0/pwm0/polarity
+sudo systemctl stop fan-control-hwpwm && sudo systemctl start fan_control.service
+ps aux | grep fan_control
+sudo sed -i '/dtoverlay=pwm,pin=18,func=2/d' /boot/firmware/config.txt
+sudo systemctl disable fan-control-hwpwm && rm -f /home/gaurav/fan_control_hwpwm.py.backup
+tail -5 /home/gaurav/fan_control.log
+sed -i '/logging.info(f"CPU Temp: {cpu_temp/a\        try:\n            with open("/run/fan_duty", "w") as f:\n                f.write(f"{duty_cycle:.1f}")\n        except:\n            pass' /home/gaurav/fan_control.py
+sudo systemctl restart fan_control.service
+sleep 3 && fan
+sudo rm -f /usr/local/bin/fan
+sudo rm -f /etc/systemd/system/fan-control-hwpwm.service
+rm -f /home/gaurav/fan_control_hwpwm.py
+rm -f /run/fan_duty
+sudo rm -f /run/fan_duty
+sudo systemctl daemon-reload
+sed -i '/try:/,/pass/d' /home/gaurav/fan_control.py
+sudo systemctl restart fan_control.service
+btop
+sudo reboot
+sudo systemctl is-enabled fan_control.service
+sudo systemctl enable fan_control.service
+sudo systemctl status fan_control.service
+sudo journalctl -u fan_control.service -n 30
+cat /home/gaurav/fan_control.py
+cp /tmp/fan_control_fixed.py /home/gaurav/fan_control.py
+sudo systemctl restart fan_control.service && sleep 3 && sudo systemctl status fan_control.service
+tail -5 /home/gaurav/fan_control.log
+rm -f /tmp/fan_control_fixed.py
+btop
+sudo systemctl restart fan_control.service
+sudo systemctl status fan_control.service
+btop
+cat /etc/systemd/system/fan_control.service
+chmod +x /home/gaurav/fan_control_hwpwm.py
+sudo systemctl stop fan_control.service
+sudo systemctl disable fan_control.service
+sudo systemctl daemon-reload
+sudo systemctl enable fan_control_hwpwm.service
+sudo systemctl start fan_control_hwpwm.service
+sudo systemctl status fan_control_hwpwm.service
+cat /home/gaurav/fan_control_hwpwm.log
+ls -la /sys/class/pwm/
+grep -i pwm /boot/firmware/config.txt
+echo "dtoverlay=pwm,pin=18,func=2" | sudo tee -a /boot/firmware/config.txt
+sudo reboot
+ls -la /sys/class/pwm/
+sudo systemctl status fan_control_hwpwm.service
+tail -20 /home/gaurav/fan_control_hwpwm.log
+ls -la /sys/class/pwm/pwmchip0/
+cat /sys/class/pwm/pwmchip0/pwm0/period
+cat /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+cat /sys/class/pwm/pwmchip0/pwm0/enable
+sudo systemctl status fan_control.service
+nano /home/gaurav/fan_control_hwpwm.py
+sudo systemctl status fan_control.service
+sudo systemctl restart fan_control_hwpwm.service
+nano /home/gaurav/fan_control_hwpwm.py
+sudo systemctl restart fan_control_hwpwm.service
+nano /home/gaurav/fan_control_hwpwm.py
+sudo systemctl restart fan_control_hwpwm.service
+nano /home/gaurav/fan_control_hwpwm.py
+sudo systemctl restart fan_control_hwpwm.service
+sudo systemctl stop fan_control_hwpwm.service
+chmod +x /home/gaurav/pwm_test.py
+sudo python3 /home/gaurav/pwm_test.py
+sudo python3 pwm_test.py 25000 10
+sudo python3 pwm_test.py 50000 10
+sudo python3 pwm_test.py 50000 100
+sudo python3 /home/gaurav/pwm_test.py 50000 10
+sudo python3 /home/gaurav/pwm_test.py 50000 20
+sudo python3 /home/gaurav/pwm_test.py 50000 30
+sudo python3 /home/gaurav/pwm_test.py 50000 40
+sudo python3 /home/gaurav/pwm_test.py 40000 40
+sudo python3 /home/gaurav/pwm_test.py 30000 40
+sudo python3 /home/gaurav/pwm_test.py 30000 10
+sudo python3 /home/gaurav/pwm_test.py 30000 20
+sudo python3 /home/gaurav/pwm_test.py 30000 30
+sudo python3 /home/gaurav/pwm_test.py 30000 50
+sudo python3 /home/gaurav/pwm_test.py 30000 100
+sudo python3 /home/gaurav/pwm_test.py 30000 10
+sudo python3 /home/gaurav/pwm_test.py 30000 5
+exit
+sed -i 's/PWM_FREQUENCY = 25000/PWM_FREQUENCY = 30000/' /home/gaurav/fan_control_hwpwm.py
+grep "PWM_FREQUENCY" /home/gaurav/fan_control_hwpwm.py
+sudo systemctl restart fan_control_hwpwm.service
+sudo systemctl status fan_control_hwpwm.service
+tail -10 /home/gaurav/fan_control_hwpwm.log
+nano /home/gaurav/fan_control_hwpwm.py
+cat /home/gaurav/fan_control_hwpwm.py | grep -A 10 "def temp_to_duty"
+sudo systemctl stop fan_control_hwpwm.service
+cp /home/gaurav/fan_control_hwpwm.py /home/gaurav/fan_control_hwpwm.py.backup
+mv /home/gaurav/fan_control_hwpwm_new.py /home/gaurav/fan_control_hwpwm.py
+chmod +x /home/gaurav/fan_control_hwpwm.py
+sudo systemctl start fan_control_hwpwm.service
+sleep 5 && tail -10 /home/gaurav/fan_control_hwpwm.log
+nano /home/gaurav/fan_control_hwpwm.py
+sed -i 's/round(duty_percent \/ 5) \* 5/round(duty_percent)/' /home/gaurav/pwm_test.py && sed -i 's/nearest multiple of 5/nearest integer/' /home/gaurav/pwm_test.py
+grep -A 5 "def set_duty_cycle" /home/gaurav/pwm_test.py
+sudo systemctl stop fan_control_hwpwm.service
+mv /home/gaurav/fan_control_hwpwm.py /home/gaurav/fan_control_hwpwm.py.30khz && mv /home/gaurav/fan_control_hwpwm_new.py /home/gaurav/fan_control_hwpwm.py
+chmod +x /home/gaurav/fan_control_hwpwm.py
+sudo systemctl start fan_control_hwpwm.service
+sleep 5 && tail -10 /home/gaurav/fan_control_hwpwm.log
+btop
+stress-ng --cpu 4 --timeout 10m
+stress --cpu 4 --timeout 10m
+stress --cpu 4 --timeout 300
+nano /home/gaurav/fan_control_hwpwm.py
+sudo systemctl restart fan_control_hwpwm.service
+sudo systemctl stop fan_control_hwpwm.service
+sudo systemctl start fan_control_hwpwm.service
+sudo systemctl stop fan_control_hwpwm.service
+sudo python3 /home/gaurav/pwm_test.py 30000 10
+sudo python3 /home/gaurav/pwm_test.py 30000 1
+sudo python3 /home/gaurav/pwm_test.py 30000 5
+sudo python3 /home/gaurav/pwm_test.py 30000 10
+sudo python3 /home/gaurav/pwm_test.py 30000 20
+sudo python3 /home/gaurav/pwm_test.py 30000 15
+sudo python3 /home/gaurav/pwm_test.py 30000 20
+sudo python3 /home/gaurav/pwm_test.py 30000 50
+sudo python3 /home/gaurav/pwm_test.py 30000 100
+sudo python3 /home/gaurav/pwm_test.py 30000 10
+sudo python3 /home/gaurav/pwm_test.py 30000 20
+sudo python3 /home/gaurav/pwm_test.py 30000 15
+sudo python3 /home/gaurav/pwm_test.py 30000 16
+sudo python3 /home/gaurav/pwm_test.py 30000 14
+sudo python3 /home/gaurav/pwm_test.py 30000 13
+sudo python3 /home/gaurav/pwm_test.py 30000 12
+sudo python3 /home/gaurav/pwm_test.py 30000 11
+sudo python3 /home/gaurav/pwm_test.py 30000 10
+sudo python3 /home/gaurav/pwm_test.py 30000 50
+sudo python3 /home/gaurav/pwm_test.py 30000 100
+sudo python3 /home/gaurav/pwm_test.py 30000 80
+sudo python3 /home/gaurav/pwm_test.py 30000 70
+sudo python3 /home/gaurav/pwm_test.py 30000 60
+sudo python3 /home/gaurav/pwm_test.py 30000 50
+sudo python3 /home/gaurav/pwm_test.py 30000 40
+sudo python3 /home/gaurav/pwm_test.py 30000 35
+sudo python3 /home/gaurav/pwm_test.py 30000 30
+sudo systemctl start fan_control_hwpwm.service
+sudo systemctl stop fan_control_hwpwm.service
+sudo python3 /home/gaurav/pwm_test.py 10000 30
+sudo python3 /home/gaurav/pwm_test.py 10000 0
+sudo python3 /home/gaurav/pwm_test.py 10000 10
+sudo python3 /home/gaurav/pwm_test.py 10000 20
+sudo python3 /home/gaurav/pwm_test.py 10000 25
+sudo python3 /home/gaurav/pwm_test.py 8000 10
+sudo python3 /home/gaurav/pwm_test.py 8000 30
+sudo python3 /home/gaurav/pwm_test.py 8000 50
+sudo python3 /home/gaurav/pwm_test.py 100 50
+sudo python3 /home/gaurav/pwm_test.py 100 10
+sudo python3 /home/gaurav/pwm_test.py 100 100
+sudo python3 /home/gaurav/pwm_test.py 100 50
+sudo python3 /home/gaurav/pwm_test.py 1000 50
+sudo python3 /home/gaurav/pwm_test.py 5000 50
+sudo python3 /home/gaurav/pwm_test.py 10000 50
+sudo python3 /home/gaurav/pwm_test.py 15000 50
+sudo python3 /home/gaurav/pwm_test.py 20000 50
+sudo python3 /home/gaurav/pwm_test.py 100 50
+sudo python3 /home/gaurav/pwm_test.py 50 50
+sudo python3 /home/gaurav/pwm_test.py 50 10
+sudo python3 /home/gaurav/pwm_test.py 10 10
+sudo python3 /home/gaurav/pwm_test.py 10 50
+sudo python3 /home/gaurav/pwm_test.py 10 80
+sudo python3 /home/gaurav/pwm_test.py 10 100
+sudo python3 /home/gaurav/pwm_test.py 10 10
+sudo python3 /home/gaurav/pwm_test.py 10 20
+sudo python3 /home/gaurav/pwm_test.py 50 20
+sudo python3 /home/gaurav/pwm_test.py 100 20
+sudo python3 /home/gaurav/pwm_test.py 100 30
+sudo python3 /home/gaurav/pwm_test.py 10 30
+sudo python3 /home/gaurav/pwm_test.py 200 30
+sudo python3 /home/gaurav/pwm_test.py 100 30
+sudo python3 /home/gaurav/pwm_test.py 25000 30
+sudo python3 /home/gaurav/pwm_test.py 25000 10
+sudo python3 /home/gaurav/pwm_test.py 25000 20
+sudo python3 /home/gaurav/pwm_test.py 22000 20
+sudo python3 /home/gaurav/pwm_test.py 30000 20
+sudo python3 /home/gaurav/pwm_test.py 30000 10
+sudo python3 /home/gaurav/pwm_test.py 30000 5
+sudo python3 /home/gaurav/pwm_test.py 60000 5
+sudo python3 /home/gaurav/pwm_test.py 40000 5
+sudo python3 /home/gaurav/pwm_test.py 35000 5
+sudo python3 /home/gaurav/pwm_test.py 30000 5
+sudo python3 /home/gaurav/pwm_test.py 32000 5
+sudo python3 /home/gaurav/pwm_test.py 32000 1
+sudo python3 /home/gaurav/pwm_test.py 33000 5
+sudo python3 /home/gaurav/pwm_test.py 31000 5
+sudo python3 /home/gaurav/pwm_test.py 31000 1
+sudo python3 /home/gaurav/pwm_test.py 1000 1
+sudo python3 /home/gaurav/pwm_test.py 2000 1
+sudo python3 /home/gaurav/pwm_test.py 2000 10
+sudo python3 /home/gaurav/pwm_test.py 2000 20
+sudo python3 /home/gaurav/pwm_test.py 2000 40
+sudo python3 /home/gaurav/pwm_test.py 100 40
+sudo python3 /home/gaurav/pwm_test.py 100 30
+sudo python3 /home/gaurav/pwm_test.py 100 10
+sudo python3 /home/gaurav/pwm_test.py 100 50
+sudo python3 /home/gaurav/pwm_test.py 100 60
+sudo python3 /home/gaurav/pwm_test.py 100 70
+sudo python3 /home/gaurav/pwm_test.py 200 50
+sudo python3 /home/gaurav/pwm_test.py 50 50
+sudo python3 /home/gaurav/pwm_test.py 50 10
+sudo python3 /home/gaurav/pwm_test.py 50 70
+sudo python3 /home/gaurav/pwm_test.py 50 40
+sudo python3 /home/gaurav/pwm_test.py 50 30
+sudo python3 /home/gaurav/pwm_test.py 50 20
+sudo python3 /home/gaurav/pwm_test.py 50 60
+sudo python3 /home/gaurav/pwm_test.py 50 50
+sudo python3 /home/gaurav/pwm_test.py 50 55
+sudo python3 /home/gaurav/pwm_test.py 100 55
+sudo python3 /home/gaurav/pwm_test.py 50 55
+sudo python3 /home/gaurav/pwm_test.py 50 10
+sudo python3 /home/gaurav/pwm_test.py 75 10
+sudo python3 /home/gaurav/pwm_test.py 80 10
+sudo python3 /home/gaurav/pwm_test.py 800 10
+sudo python3 /home/gaurav/pwm_test.py 8000 10
+sudo python3 /home/gaurav/pwm_test.py 80 10
+sudo python3 /home/gaurav/pwm_test.py 25000 10
+sudo python3 /home/gaurav/pwm_test.py 25000 20
+sudo python3 /home/gaurav/pwm_test.py 20000 20
+sudo python3 /home/gaurav/pwm_test.py 20000 30
+sudo python3 /home/gaurav/pwm_test.py 20000 40
+sudo python3 /home/gaurav/pwm_test.py 20000 31
+sudo python3 /home/gaurav/pwm_test.py 20000 32
+sudo python3 /home/gaurav/pwm_test.py 20000 33
+sudo python3 /home/gaurav/pwm_test.py 20000 35
+sudo python3 /home/gaurav/pwm_test.py 100 35
+sudo python3 /home/gaurav/pwm_test.py 100 40
+sudo python3 /home/gaurav/pwm_test.py 10 40
+sudo python3 /home/gaurav/pwm_test.py 10 60
+sudo python3 /home/gaurav/pwm_test.py 10 80
+sudo python3 /home/gaurav/pwm_test.py 100 80
+nano /home/gaurav/fan_control_hwpwm.py
+sudo systemctl start fan_control_hwpwm.service
+sudo systemctl restart fan_control_hwpwm.service
+nano /home/gaurav/fan_control_hwpwm.py
+sudo systemctl restart fan_control_hwpwm.service
+nano /home/gaurav/fan_control_hwpwm.py
+sudo systemctl restart fan_control_hwpwm.service
+nano /home/gaurav/fan_control_hwpwm.py
+sudo systemctl restart fan_control_hwpwm.service
+exit
+bash <(curl -Ss https://my-netdata.io/kickstart.sh)
+cat /etc/os-release
+bash <(curl -Ss https://my-netdata.io/kickstart.sh)
+wget -O /tmp/netdata-kickstart.sh https://get.netdata.cloud/kickstart.sh
+sudo sh /tmp/netdata-kickstart.sh
+sudo tee /etc/nginx/sites-available/netdata << 'EOF'
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:19999;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Server $host;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+    }
+}
+EOF
+
+sudo ln -s /etc/nginx/sites-available/netdata /etc/nginx/sites-enabled/
+sudo apt update
+sudo apt install nginx -y
+sudo ln -s /etc/nginx/sites-available/netdata /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+sudo tee /etc/nginx/sites-available/netdata << 'EOF'
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:19999;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Server $host;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+    }
+}
+EOF
+
+sudo nginx -t
+sudo systemctl restart nginx
+sudo rm /etc/nginx/sites-enabled/default
+ls /etc/nginx/sites-available/
+sudo ln -sf /etc/nginx/sites-available/netdata /etc/nginx/sites-enabled/netdata
+sudo nginx -t
+sudo systemctl restart nginx
+sudo systemctl stop netdata
+sudo systemctl disable netdata
+sudo apt purge netdata netdata-* -y
+sudo apt purge netdata-repo-edge -y
+sudo apt update
+sudo rm -rf /etc/netdata
+sudo rm -rf /opt/netdata
+sudo rm -rf /var/lib/netdata
+sudo rm -rf /usr/libexec/netdata
+sudo rm -rf /usr/lib/netdata
+sudo rm -rf /var/cache/netdata
+sudo rm -rf /var/log/netdata
+sudo rm -f /etc/cron.daily/netdata-updater
+sudo rm -f /etc/nginx/sites-enabled/netdata
+sudo rm -f /etc/nginx/sites-available/netdata
+sudo systemctl restart nginx
+which netdata
+sudo apt install glances -y
+glances -w
+sudo apt purge glances -y
+sudo apt update
+sudo apt install python3 python3-venv python3-pip -y
+mkdir ~/homeassistant
+cd ~/homeassistant
+python3 -m venv .
+source bin/activate
+pip install wheel
+pip install homeassistant
+exit
+hass
+cd ~/homeassistant
+python3 -m venv .
+source bin/activate
+pip install wheel
+pip install homeassistant
+hass
+exit
+btop
+rm -rf ~/homeassistant
+sudo pkill -f hass || true
+sudo pip3 uninstall -y homeassistant home-assistant-bluetooth hass-nabucasa HAP-python aiodiscover zeroconf bluetooth-auto-recovery PyRIC
+sudo rm -f /etc/systemd/system/home-assistant.service
+sudo systemctl daemon-reload
+sudo reboot
+exit
+glances -w
+sudo rm -rf ~/.homeassistant
+sudo rm -rf ~/.cache/pip
+sudo rm -rf ~/.config/homeassistant
+sudo rm -rf /tmp/pip*
+which hass
+sudo apt install python3-pip -y
+sudo pip3 install glances[web] --break-system-packages
+glances -w
+sudo tee /etc/nginx/sites-available/default << 'EOF'
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:61208;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+EOF
+
+sudo systemctl restart nginx
+systemctl status nginx --no-pager
+ls -l /etc/nginx/sites-enabled/
+sudo tee /etc/nginx/sites-available/default << 'EOF'
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:61208;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+EOF
+
+sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl restart nginx
+sudo tee /etc/nginx/sites-available/default << 'EOF'
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:61208/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+EOF
+
+sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+sudo rm /etc/nginx/sites-enabled/default
+sudo rm /etc/nginx/sites-available/default
+sudo tee /etc/nginx/sites-available/default << 'EOF'
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:61208/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+EOF
+
+sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+sudo systemctl restart nginx
+sudo tee /etc/systemd/system/glances.service << 'EOF'
+[Unit]
+Description=Glances Web UI
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/glances -w
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now glances
+systemctl status glances --no-pager
+systemctl start glances --no-pager
+systemctl status glances --no-pager
+which glances
+sudo rm /etc/systemd/system/glances.service
+sudo systemctl daemon-reload
+glances -w
+ls -l /etc/nginx/sites-enabled/
+sudo tee /etc/systemd/system/glances.service << 'EOF'
+[Unit]
+Description=Glances Web UI
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/glances -w
+Restart=always
+User=gaurav
+Environment=LC_ALL=C.UTF-8
+Environment=LANG=C.UTF-8
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now glances
+systemctl status glances --no-pager
+sudo nano /etc/systemd/system/glances.service
+nano /home/gaurav/fan_control_hwpwm.py
+cat /home/gaurav/fan_control_hwpwm.py
+sudo nano /home/gaurav/fan_speed.sh
+sudo chmod +x /home/gaurav/fan_speed.sh
+mkdir -p ~/.config/glances
+nano ~/.config/glances/glances.conf
+systemctl restart glances
+systemctl status glances
+exit
+sudo pip3 uninstall glances -y || true
+sudo pip3 uninstall bottle -y || true
+sudo pip3 uninstall psutil -y || true
+sudo pip3 uninstall glances --break-system-packages -y
+sudo pip3 uninstall bottle --break-system-packages -y
+sudo pip3 uninstall psutil --break-system-packages -y
+ls -l /etc/nginx/sites-enabled/
+sudo rm -f /etc/systemd/system/glances.service
+sudo systemctl daemon-reload
+sudo systemctl status glances.service
+sudo systemctl stop glances.service
+sudo systemctl disable glances.service || true
+sudo systemctl reset-failed glances.service
+sudo systemctl daemon-reload
+which glances
+exit
+python3 /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+sudo systemctl status fan_control.service
+btop
+nano /home/gaurav/fan_control.py
+sudo systemctl daemon-reload
+sudo systemctl restart fan_control.service
+btop
+sudo systemctl stop fan_control.service
+python3 /home/gaurav/fan_control.py
+nano /home/gaurav/fan_control.py
+
