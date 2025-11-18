@@ -111,11 +111,34 @@ for package in "${PACKAGES[@]}"; do
 done
 
 # ==========================================
-# Step 3: Update Applications
+# Step 3: Check for New Applications (run setup scripts)
 # ==========================================
 echo ""
 echo "=========================================="
-echo "Step 3: Updating applications"
+echo "Step 3: Checking for new applications"
+echo "=========================================="
+
+# Check if homepage is installed, if not run setup script
+if [ ! -d "/home/$ORIGINAL_USER/applications/homepage" ]; then
+    echo ""
+    echo "New application detected: Homepage"
+    if [ -f "$SCRIPT_DIR/07-homepage-setup.sh" ]; then
+        echo "  → Running setup script..."
+        bash "$SCRIPT_DIR/07-homepage-setup.sh"
+        echo "  ✓ Homepage installed"
+    else
+        echo "  ⚠ Setup script not found, skipping..."
+    fi
+else
+    echo "  ✓ Homepage already installed"
+fi
+
+# ==========================================
+# Step 4: Update Applications
+# ==========================================
+echo ""
+echo "=========================================="
+echo "Step 4: Updating applications"
 echo "=========================================="
 
 UPDATED_SERVICES=()
@@ -211,12 +234,12 @@ for app_name in "${!DIR_APPS[@]}"; do
 done
 
 # ==========================================
-# Step 4: Restart Services
+# Step 5: Restart Services
 # ==========================================
 if [ ${#UPDATED_SERVICES[@]} -gt 0 ]; then
     echo ""
     echo "=========================================="
-    echo "Step 4: Restarting updated services"
+    echo "Step 5: Restarting updated services"
     echo "=========================================="
     
     for service in "${UPDATED_SERVICES[@]}"; do
@@ -241,7 +264,7 @@ if [ ${#UPDATED_SERVICES[@]} -gt 0 ]; then
 else
     echo ""
     echo "=========================================="
-    echo "Step 4: No services need restarting"
+    echo "Step 5: No services need restarting"
     echo "=========================================="
 fi
 
