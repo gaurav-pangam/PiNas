@@ -2,7 +2,7 @@
 #
 # PiNAS System Monitor Homepage Setup Script
 # Installs and configures the web-based system monitoring dashboard
-# Accessible at http://192.168.0.254:8080
+# Accessible at http://192.168.0.254 (via nginx) or http://192.168.0.254:8080 (direct)
 #
 
 set -e
@@ -64,6 +64,34 @@ EOF
 echo "✓ Service file created"
 
 echo ""
+echo "Configuring nginx reverse proxy..."
+cat > /etc/nginx/sites-available/default << 'NGINX_EOF'
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+NGINX_EOF
+
+# Test nginx configuration
+if nginx -t 2>/dev/null; then
+    systemctl reload nginx
+    echo "✓ Nginx configured to proxy port 80 → 8080"
+else
+    echo "⚠ Warning: Nginx configuration test failed, skipping reload"
+fi
+
+echo ""
 echo "Enabling and starting service..."
 systemctl daemon-reload
 systemctl enable pinas-homepage.service
@@ -78,8 +106,10 @@ systemctl status pinas-homepage.service --no-pager -l
 echo ""
 echo "=========================================="
 echo "Access the homepage at:"
-echo "  http://192.168.0.254:8080"
-echo "  http://$(hostname -I | awk '{print $1}'):8080"
+echo "  http://192.168.0.254 (via nginx proxy)"
+echo "  http://192.168.0.254:8080 (direct)"
+echo "  http://$(hostname -I | awk '{print $1}') (via nginx proxy)"
+echo "  http://$(hostname -I | awk '{print $1}'):8080 (direct)"
 echo "=========================================="
 echo ""
 echo "Features:"

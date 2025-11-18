@@ -134,6 +134,62 @@ else
 fi
 
 # ==========================================
+# Step 3.5: Check Nginx Reverse Proxy Configuration
+# ==========================================
+echo ""
+echo "=========================================="
+echo "Step 3.5: Checking nginx reverse proxy"
+echo "=========================================="
+
+NGINX_CONFIG="/etc/nginx/sites-available/default"
+NEEDS_NGINX_UPDATE=false
+
+# Check if nginx config exists
+if [ ! -f "$NGINX_CONFIG" ]; then
+    echo "  ⚠ Nginx config not found"
+    NEEDS_NGINX_UPDATE=true
+else
+    # Check if it's configured to proxy to port 8080
+    if grep -q "proxy_pass.*127.0.0.1:8080" "$NGINX_CONFIG"; then
+        echo "  ✓ Nginx reverse proxy already configured"
+    else
+        echo "  → Nginx reverse proxy not configured for PiNAS monitor"
+        NEEDS_NGINX_UPDATE=true
+    fi
+fi
+
+# Update nginx config if needed
+if [ "$NEEDS_NGINX_UPDATE" = true ]; then
+    echo "  → Configuring nginx reverse proxy..."
+    cat > "$NGINX_CONFIG" << 'NGINX_EOF'
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+NGINX_EOF
+
+    # Test nginx configuration
+    if nginx -t 2>/dev/null; then
+        systemctl reload nginx
+        echo "  ✓ Nginx configured to proxy port 80 → 8080"
+    else
+        echo "  ✗ Nginx configuration test failed!"
+        echo "  Please check: sudo nginx -t"
+    fi
+fi
+
+# ==========================================
 # Step 4: Update Applications
 # ==========================================
 echo ""
@@ -286,6 +342,10 @@ else
     echo "No applications were updated (already at latest version)"
 fi
 
+echo ""
+echo "Access PiNAS Monitor:"
+echo "  http://192.168.0.254 (via nginx proxy)"
+echo "  http://192.168.0.254:8080 (direct)"
 echo ""
 echo "To check service status:"
 echo "  sudo systemctl status fan_control_hwpwm.service"
