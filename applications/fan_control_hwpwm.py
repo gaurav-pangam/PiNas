@@ -23,7 +23,7 @@ PWM_PERIOD_NS = int(1_000_000_000 / PWM_FREQUENCY)  # Period in nanoseconds
 # --- Temperature thresholds ---
 FAN_OFF_TEMP = 37  # Below this, fan is off
 MAX_TEMP = 45      # Max temp for full speed
-MAX_PWM_DUTY = 60  # Cap PWM at 60%
+MAX_PWM_DUTY = 50  # Cap PWM at 50%
 TEMP_HYSTERESIS = 2  # Temperature change threshold in °C to trigger speed change
 
 def setup_pwm():
