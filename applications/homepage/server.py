@@ -264,6 +264,8 @@ class SystemMonitorHandler(http.server.SimpleHTTPRequestHandler):
             super().log_message(format, *args)
 
 if __name__ == '__main__':
+    # Allow address reuse to prevent "Address already in use" errors on restart
+    socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), SystemMonitorHandler) as httpd:
         print(f"🖥️  PiNAS System Monitor Server")
         print(f"📡 Serving on http://0.0.0.0:{PORT}")

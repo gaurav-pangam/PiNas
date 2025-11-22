@@ -323,11 +323,25 @@ if [ ${#UPDATED_SERVICES[@]} -gt 0 ]; then
     for service in "${UPDATED_SERVICES[@]}"; do
         echo ""
         echo "Restarting: $service"
-        
+
         # Check if service exists and is enabled
         if systemctl is-enabled "$service" &>/dev/null; then
+            # Special handling for pinas-homepage.service - kill any process on port 8080
+            if [ "$service" = "pinas-homepage.service" ]; then
+                echo "  → Checking for processes on port 8080..."
+                PORT_PID=$(netstat -tlnp 2>/dev/null | grep ':8080' | awk '{print $7}' | cut -d'/' -f1)
+                if [ -n "$PORT_PID" ]; then
+                    echo "  → Killing process $PORT_PID on port 8080..."
+                    kill -9 "$PORT_PID" 2>/dev/null || true
+                    sleep 1
+                fi
+            fi
+
             systemctl restart "$service"
-            
+
+            # Wait a moment for service to start
+            sleep 2
+
             # Check if restart was successful
             if systemctl is-active "$service" &>/dev/null; then
                 echo "  ✓ Service restarted successfully"
