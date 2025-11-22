@@ -284,7 +284,10 @@ for app_name in "${!DIR_APPS[@]}"; do
 
     # Compare directories to see if update is needed
     # Use rsync dry-run to check for differences
-    if rsync -avn --delete "$REPO_ROOT/$source/" "$dest/" | grep -q '^deleting\|^>'; then
+    RSYNC_OUTPUT=$(rsync -avn --delete "$REPO_ROOT/$source/" "$dest/" 2>&1)
+
+    # Check if there are any file changes (look for any file operations)
+    if echo "$RSYNC_OUTPUT" | grep -qE '^(deleting|>f|cd\+\+\+\+\+\+\+|\.d\.\.\.\.\.\.\.\.|>f\+\+\+\+\+\+\+)'; then
         echo "  → Updating directory..."
         rsync -av --delete "$REPO_ROOT/$source/" "$dest/"
         chown -R "$ORIGINAL_USER:$ORIGINAL_USER" "$dest"
