@@ -2,6 +2,7 @@
 """
 Lightweight system monitor API server for PiNAS
 Uses only Python standard library - no external dependencies
+Displays network stats for both wlan1 and wlan0 interfaces
 """
 
 import http.server
