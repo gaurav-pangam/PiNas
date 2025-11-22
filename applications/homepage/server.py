@@ -132,38 +132,45 @@ class SystemMonitorHandler(http.server.SimpleHTTPRequestHandler):
             return {'total': 0, 'used': 0, 'free': 0, 'percent': 0, 'unit': 'MB', 'error': str(e)}
     
     def get_network(self):
-        """Get network statistics"""
+        """Get network statistics for wlan1 and wlan0"""
         try:
             # Read network stats from /proc/net/dev
             with open('/proc/net/dev', 'r') as f:
                 lines = f.readlines()
-            
-            # Find the primary network interface (usually eth0 or wlan0)
-            rx_bytes = 0
-            tx_bytes = 0
-            
+
+            interfaces = {}
+
+            # Parse stats for wlan1 and wlan0
             for line in lines[2:]:  # Skip header lines
-                if 'eth0' in line or 'wlan0' in line or 'end0' in line:
+                if 'wlan1' in line or 'wlan0' in line:
                     parts = line.split()
-                    rx_bytes += int(parts[1])
-                    tx_bytes += int(parts[9])
-            
-            # Convert to MB
-            rx_mb = rx_bytes / (1024 * 1024)
-            tx_mb = tx_bytes / (1024 * 1024)
-            
-            # Note: Rate calculation would require storing previous values
-            # For now, we'll return totals and calculate rate on frontend
+                    iface_name = parts[0].rstrip(':')
+                    rx_bytes = int(parts[1])
+                    tx_bytes = int(parts[9])
+
+                    # Convert to MB
+                    rx_mb = rx_bytes / (1024 * 1024)
+                    tx_mb = tx_bytes / (1024 * 1024)
+
+                    interfaces[iface_name] = {
+                        'rx_bytes': rx_bytes,
+                        'tx_bytes': tx_bytes,
+                        'rx_mb': round(rx_mb, 2),
+                        'tx_mb': round(tx_mb, 2),
+                        'rx_rate': 0,  # Will be calculated on frontend
+                        'tx_rate': 0   # Will be calculated on frontend
+                    }
+
+            # Return both interfaces (wlan1 first, then wlan0)
             return {
-                'rx_bytes': rx_bytes,
-                'tx_bytes': tx_bytes,
-                'rx_mb': round(rx_mb, 2),
-                'tx_mb': round(tx_mb, 2),
-                'rx_rate': 0,  # Will be calculated on frontend
-                'tx_rate': 0   # Will be calculated on frontend
+                'wlan1': interfaces.get('wlan1', {'rx_bytes': 0, 'tx_bytes': 0, 'rx_mb': 0, 'tx_mb': 0, 'rx_rate': 0, 'tx_rate': 0}),
+                'wlan0': interfaces.get('wlan0', {'rx_bytes': 0, 'tx_bytes': 0, 'rx_mb': 0, 'tx_mb': 0, 'rx_rate': 0, 'tx_rate': 0})
             }
         except Exception as e:
-            return {'rx_bytes': 0, 'tx_bytes': 0, 'rx_mb': 0, 'tx_mb': 0, 'error': str(e)}
+            return {
+                'wlan1': {'rx_bytes': 0, 'tx_bytes': 0, 'rx_mb': 0, 'tx_mb': 0, 'rx_rate': 0, 'tx_rate': 0, 'error': str(e)},
+                'wlan0': {'rx_bytes': 0, 'tx_bytes': 0, 'rx_mb': 0, 'tx_mb': 0, 'rx_rate': 0, 'tx_rate': 0, 'error': str(e)}
+            }
     
     def get_tasks(self):
         """Get top processes by CPU usage"""
