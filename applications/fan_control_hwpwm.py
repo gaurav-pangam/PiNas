@@ -81,14 +81,14 @@ def get_cpu_temp():
         return int(f.read()) / 1000.0
 
 def temp_to_duty(temp):
-    """Convert temperature to PWM duty cycle (rounded to integer)"""
+    """Convert temperature to PWM duty cycle (rounded to integer, capped at 60%)"""
     if temp <= FAN_OFF_TEMP:
         return 0  # Turn off fan
     elif temp >= MAX_TEMP:
-        return 100  # Full speed
+        return 60  # Max speed capped at 60%
     else:
         # Linear interpolation between FAN_OFF_TEMP and MAX_TEMP
-        duty = ((temp - FAN_OFF_TEMP) / (MAX_TEMP - FAN_OFF_TEMP)) * 100
+        duty = ((temp - FAN_OFF_TEMP) / (MAX_TEMP - FAN_OFF_TEMP)) * 60
         # Round to nearest integer
         return round(duty)
 
