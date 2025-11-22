@@ -333,17 +333,30 @@ if [ ${#UPDATED_SERVICES[@]} -gt 0 ]; then
                 if [ -n "$PORT_PID" ]; then
                     echo "  → Killing process $PORT_PID on port 8080..."
                     kill -9 "$PORT_PID" 2>/dev/null || true
-                    sleep 1
+                    sleep 2
                 fi
             fi
 
-            systemctl restart "$service"
+            # Stop the service first to ensure clean restart
+            systemctl stop "$service"
+            sleep 1
 
-            # Wait a moment for service to start
-            sleep 2
+            # Start the service
+            systemctl start "$service"
+
+            # Wait for service to start (retry up to 10 times, 1 second apart)
+            echo "  → Waiting for service to start..."
+            SERVICE_STARTED=false
+            for i in {1..10}; do
+                sleep 1
+                if systemctl is-active "$service" &>/dev/null; then
+                    SERVICE_STARTED=true
+                    break
+                fi
+            done
 
             # Check if restart was successful
-            if systemctl is-active "$service" &>/dev/null; then
+            if [ "$SERVICE_STARTED" = true ]; then
                 echo "  ✓ Service restarted successfully"
             else
                 echo "  ✗ Service failed to start!"
