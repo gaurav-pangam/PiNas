@@ -286,8 +286,11 @@ for app_name in "${!DIR_APPS[@]}"; do
     # Use rsync dry-run to check for differences
     RSYNC_OUTPUT=$(rsync -avn --delete "$REPO_ROOT/$source/" "$dest/" 2>&1)
 
-    # Check if there are any file changes (look for any file operations)
-    if echo "$RSYNC_OUTPUT" | grep -qE '^(deleting|>f|cd\+\+\+\+\+\+\+|\.d\.\.\.\.\.\.\.\.|>f\+\+\+\+\+\+\+)'; then
+    # Check if there are any file changes
+    # rsync lists files that would be transferred, excluding the summary lines
+    FILE_COUNT=$(echo "$RSYNC_OUTPUT" | grep -v "^sending\|^sent\|^total size\|^$\|^\.\/$" | wc -l)
+
+    if [ "$FILE_COUNT" -gt 0 ]; then
         echo "  → Updating directory..."
         rsync -av --delete "$REPO_ROOT/$source/" "$dest/"
         chown -R "$ORIGINAL_USER:$ORIGINAL_USER" "$dest"
