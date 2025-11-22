@@ -23,6 +23,8 @@ PWM_PERIOD_NS = int(1_000_000_000 / PWM_FREQUENCY)  # Period in nanoseconds
 # --- Temperature thresholds ---
 FAN_OFF_TEMP = 37  # Below this, fan is off
 MAX_TEMP = 45      # Max temp for full speed
+MAX_PWM_DUTY = 60  # Cap PWM at 60%
+TEMP_HYSTERESIS = 2  # Temperature change threshold in °C to trigger speed change
 
 def setup_pwm():
     """Initialize hardware PWM"""
@@ -81,28 +83,46 @@ def get_cpu_temp():
         return int(f.read()) / 1000.0
 
 def temp_to_duty(temp):
-    """Convert temperature to PWM duty cycle (rounded to integer, capped at 60%)"""
+    """Convert temperature to PWM duty cycle (0-100% interpolation, capped at 60%)"""
     if temp <= FAN_OFF_TEMP:
         return 0  # Turn off fan
     elif temp >= MAX_TEMP:
-        return 60  # Max speed capped at 60%
+        duty = 100  # Full speed calculation
     else:
-        # Linear interpolation between FAN_OFF_TEMP and MAX_TEMP
-        duty = ((temp - FAN_OFF_TEMP) / (MAX_TEMP - FAN_OFF_TEMP)) * 60
-        # Round to nearest integer
-        return round(duty)
+        # Linear interpolation between FAN_OFF_TEMP and MAX_TEMP (0-100%)
+        duty = ((temp - FAN_OFF_TEMP) / (MAX_TEMP - FAN_OFF_TEMP)) * 100
+
+    # Cap at maximum allowed PWM duty
+    duty = min(duty, MAX_PWM_DUTY)
+    # Round to nearest integer
+    return round(duty)
 
 try:
     if not setup_pwm():
         logging.error("Failed to initialize PWM, exiting")
         exit(1)
-    
+
     logging.info("Hardware PWM fan control started")
+
+    # Track previous values for smoothing
+    prev_duty_cycle = 0
+    prev_temp = get_cpu_temp()
+
     while True:
         cpu_temp = get_cpu_temp()
-        duty_cycle = temp_to_duty(cpu_temp)
-        set_duty_cycle(duty_cycle)
-        logging.info(f"CPU Temp: {cpu_temp:.1f}°C | PWM Duty: {duty_cycle}%")
+        temp_change = abs(cpu_temp - prev_temp)
+
+        # Only recalculate duty cycle if temperature changed significantly
+        if temp_change >= TEMP_HYSTERESIS or prev_duty_cycle == 0:
+            duty_cycle = temp_to_duty(cpu_temp)
+
+            # Only update if duty cycle actually changed
+            if duty_cycle != prev_duty_cycle:
+                set_duty_cycle(duty_cycle)
+                logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: {duty_cycle}%")
+                prev_duty_cycle = duty_cycle
+                prev_temp = cpu_temp
+
         time.sleep(2)
 
 except KeyboardInterrupt:
