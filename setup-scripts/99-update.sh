@@ -150,6 +150,21 @@ else
     echo "  ✓ Homepage already installed"
 fi
 
+# Check if uxplay service is installed, if not run setup script
+if [ ! -f "/etc/systemd/system/uxplay.service" ]; then
+    echo ""
+    echo "New application detected: UxPlay"
+    if [ -f "$SCRIPT_DIR/08-uxplay-setup.sh" ]; then
+        echo "  → Running setup script..."
+        bash "$SCRIPT_DIR/08-uxplay-setup.sh"
+        echo "  ✓ UxPlay installed"
+    else
+        echo "  ⚠ Setup script not found, skipping..."
+    fi
+else
+    echo "  ✓ UxPlay already installed"
+fi
+
 # ==========================================
 # Step 3.5: Check Nginx Reverse Proxy Configuration
 # ==========================================
