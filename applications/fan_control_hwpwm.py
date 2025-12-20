@@ -30,6 +30,7 @@ FAN_OFF_TEMP = 50  # Below this, fan is off eg: 37
 MAX_TEMP = 55      # Max temp for full speed eg: 45
 MAX_PWM_DUTY = 50  # Cap PWM at 50% (variable speed mode only)
 TEMP_HYSTERESIS = 2  # Temperature change threshold in °C to trigger speed change
+MIN_FAN_ON_TIME = 30  # Minimum time (seconds) fan must stay on before turning off
 
 # --- Two-speed mode settings ---
 TWO_SPEED_LOW_DUTY = 11   # 11% duty at 30kHz = 50% fan speed
@@ -99,10 +100,26 @@ def get_cpu_temp():
     with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
         return int(f.read()) / 1000.0
 
-def temp_to_duty(temp):
-    """Convert temperature to PWM duty cycle"""
+def temp_to_duty(temp, fan_on_time):
+    """Convert temperature to PWM duty cycle
+
+    Args:
+        temp: Current CPU temperature
+        fan_on_time: Time elapsed since fan was turned on (seconds)
+
+    Returns:
+        Duty cycle percentage (0-100)
+    """
+    # Check if we should turn off the fan
     if temp <= FAN_OFF_TEMP:
-        return 0  # Turn off fan
+        # Only turn off if fan has been on for at least MIN_FAN_ON_TIME
+        if fan_on_time >= MIN_FAN_ON_TIME:
+            return 0  # Turn off fan
+        # Otherwise, keep fan running at minimum speed
+        if TWO_SPEED_MODE:
+            return TWO_SPEED_LOW_DUTY
+        else:
+            return 1  # Minimum duty to keep fan running
 
     if TWO_SPEED_MODE:
         # Two-speed mode: 50% speed below MAX_TEMP, 100% speed at/above MAX_TEMP
@@ -133,19 +150,39 @@ try:
     # Track previous values for smoothing
     prev_duty_cycle = 0
     prev_temp = get_cpu_temp()
+    fan_turned_on_time = None  # Track when fan was last turned on
 
     while True:
         cpu_temp = get_cpu_temp()
         temp_change = abs(cpu_temp - prev_temp)
 
+        # Calculate how long the fan has been on
+        if fan_turned_on_time is None:
+            fan_on_time = 0  # Fan is currently off
+        else:
+            fan_on_time = time.time() - fan_turned_on_time
+
         # Only recalculate duty cycle if temperature changed significantly
         if temp_change >= TEMP_HYSTERESIS or prev_duty_cycle == 0:
-            duty_cycle = temp_to_duty(cpu_temp)
+            duty_cycle = temp_to_duty(cpu_temp, fan_on_time)
 
             # Only update if duty cycle actually changed
             if duty_cycle != prev_duty_cycle:
                 set_duty_cycle(duty_cycle)
-                logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: {duty_cycle}%")
+
+                # Track fan state transitions
+                if prev_duty_cycle == 0 and duty_cycle > 0:
+                    # Fan turning on
+                    fan_turned_on_time = time.time()
+                    logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: {duty_cycle}% | Fan ON")
+                elif prev_duty_cycle > 0 and duty_cycle == 0:
+                    # Fan turning off
+                    fan_turned_on_time = None
+                    logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: {duty_cycle}% | Fan OFF (ran for {fan_on_time:.1f}s)")
+                else:
+                    # Speed change while running
+                    logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: {duty_cycle}%")
+
                 prev_duty_cycle = duty_cycle
                 prev_temp = cpu_temp
 
