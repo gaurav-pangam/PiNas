@@ -11,7 +11,7 @@ logging.basicConfig(
 )
 
 # --- Mode selection ---
-TWO_SPEED_MODE = False  # Toggle between 2-level mode (True) and variable speed mode (False)
+TWO_SPEED_MODE = True  # Toggle between 2-level mode (True) and variable speed mode (False)
 
 # --- Hardware PWM setup ---
 # GPIO 18 = PWM0 on pwmchip0
@@ -26,8 +26,8 @@ PWM_FREQUENCY_VARIABLE = 100
 PWM_FREQUENCY_TWO_SPEED = 30000
 
 # --- Temperature thresholds ---
-FAN_OFF_TEMP = 37  # Below this, fan is off eg: 37
-MAX_TEMP = 45      # Max temp for full speed eg: 45
+FAN_OFF_TEMP = 50  # Below this, fan is off eg: 37
+MAX_TEMP = 55      # Max temp for full speed eg: 45
 MAX_PWM_DUTY = 50  # Cap PWM at 50% (variable speed mode only)
 TEMP_HYSTERESIS = 2  # Temperature change threshold in °C to trigger speed change
 MIN_FAN_ON_TIME = 30  # Minimum time (seconds) fan must stay on before turning off
