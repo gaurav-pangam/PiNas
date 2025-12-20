@@ -21,7 +21,7 @@ PiNAS transforms a Raspberry Pi or compatible SBC into a fully functional networ
 - **Fan Control**: Hardware PWM-based temperature-controlled fan speed (GPIO 18)
 - **System Monitor**: Web-based dashboard for real-time system monitoring
 - **Static IP**: Configured for reliable network access (192.168.0.254)
-- **Remote Access**: Tailscale VPN for secure remote access
+- **Remote Access**: Tailscale VPN for secure remote access (optional, manual start)
 - **Web Server**: Nginx web server for hosting web interfaces
 - **AirPlay Server**: UxPlay for wireless media streaming from iOS/macOS devices
 - **Automated Setup**: One-command installation of entire system
@@ -113,11 +113,16 @@ This will:
 - Network discovery via Avahi
 - Access: `\\192.168.0.254\PiDrive` or `\\raspberrypi\PiDrive`
 
-### Tailscale VPN
+### Tailscale VPN (Optional)
 
 - Secure remote access
 - Access your NAS from anywhere
 - Manual authentication required during setup
+- **Does NOT start automatically on boot** - start manually when needed
+- Commands:
+  - Start: `sudo systemctl start tailscaled`
+  - Stop: `sudo systemctl stop tailscaled`
+  - Enable auto-start: `sudo systemctl enable tailscaled`
 
 ### Hardware PWM Fan Control
 

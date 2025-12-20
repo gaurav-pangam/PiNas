@@ -14,7 +14,7 @@ That's it! The script will:
 1. ✅ Configure static IP (192.168.0.254)
 2. ✅ Setup USB auto-mount
 3. ✅ Install and configure Samba
-4. ✅ Install Tailscale VPN
+4. ✅ Install Tailscale VPN (optional, manual start)
 5. ✅ Setup hardware PWM fan control
 
 ## Updating Existing Installation
@@ -27,6 +27,7 @@ sudo ./99-update.sh
 ```
 
 This will:
+
 - Pull latest code from git
 - Update application files
 - Restart affected services
@@ -48,10 +49,24 @@ During **fresh** setup, you'll be prompted for:
 - **Username**: `gaurav`
 - **Password**: (the Samba password you set)
 
-### Remote Access
+### Remote Access (Optional)
+
+Tailscale is installed but does NOT start automatically. To use it:
+
+```bash
+# Start Tailscale
+sudo systemctl start tailscaled
+
+# Check status and get IP
+tailscale status
+tailscale ip -4
+
+# Stop Tailscale when not needed
+sudo systemctl stop tailscaled
+```
 
 - Use Tailscale IP from any device on your Tailscale network
-- Check Tailscale IP: `tailscale ip -4`
+- To enable auto-start: `sudo systemctl enable tailscaled`
 
 ### Check Status
 
@@ -67,7 +82,8 @@ tail -f ~/fan_control_hwpwm.log
 # Samba status
 sudo systemctl status smbd
 
-# Tailscale status
+# Tailscale status (if started)
+sudo systemctl status tailscaled
 tailscale status
 ```
 

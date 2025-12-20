@@ -100,6 +100,7 @@ sudo ./03-samba-setup.sh
 
 - Installs Tailscale VPN client
 - Enables secure remote access
+- **Optional**: Does NOT start automatically on boot
 - **Manual step required**: Get auth command from Tailscale dashboard
 
 **Usage:**
@@ -108,6 +109,22 @@ sudo ./03-samba-setup.sh
 sudo ./04-tailscale-setup.sh
 # Then follow the instructions to get auth command from:
 # https://login.tailscale.com/admin/machines
+```
+
+**Starting/Stopping Tailscale:**
+
+```bash
+# Start Tailscale when needed
+sudo systemctl start tailscaled
+
+# Stop Tailscale
+sudo systemctl stop tailscaled
+
+# Enable auto-start on boot (optional)
+sudo systemctl enable tailscaled
+
+# Disable auto-start on boot
+sudo systemctl disable tailscaled
 ```
 
 ### 5. Fan Control (`05-fan-control-setup.sh`)
