@@ -143,6 +143,58 @@ sudo ./06-nginx-setup.sh
 
 **Config:** `/etc/nginx/sites-available/default`
 
+### 7. System Monitor Homepage (`07-homepage-setup.sh`)
+
+- Web-based real-time system monitoring dashboard
+- Lightweight Python server (no external dependencies)
+- Mobile responsive design with btop-inspired terminal aesthetic
+- Features:
+  - CPU Temperature & Fan Speed
+  - CPU Frequency (per-core and average)
+  - RAM Usage
+  - Network Statistics (RX/TX with rates)
+  - Top Processes by CPU usage
+  - Configurable refresh rate (1-30 seconds)
+
+**Usage:**
+
+```bash
+sudo ./07-homepage-setup.sh
+```
+
+**Access:** `http://192.168.0.254:8080` or `http://192.168.0.254` (via nginx proxy)
+
+### 8. UxPlay AirPlay Server (`08-uxplay-setup.sh`)
+
+- Installs UxPlay for AirPlay mirroring/streaming
+- Creates systemd service for easy management
+- Configured to use audio output device 0
+- **Not enabled for auto-start** - start manually when needed
+
+**Usage:**
+
+```bash
+sudo ./08-uxplay-setup.sh
+```
+
+**To start AirPlay:**
+
+```bash
+sudo systemctl start uxplay.service
+```
+
+**To stop AirPlay:**
+
+```bash
+sudo systemctl stop uxplay.service
+```
+
+**To check status:**
+
+```bash
+sudo systemctl status uxplay.service
+```
+
 ## Configuration Details
 
 ### Network

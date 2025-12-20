@@ -23,6 +23,7 @@ PiNAS transforms a Raspberry Pi or compatible SBC into a fully functional networ
 - **Static IP**: Configured for reliable network access (192.168.0.254)
 - **Remote Access**: Tailscale VPN for secure remote access
 - **Web Server**: Nginx web server for hosting web interfaces
+- **AirPlay Server**: UxPlay for wireless media streaming from iOS/macOS devices
 - **Automated Setup**: One-command installation of entire system
 - **Easy Updates**: Safe update script for existing installations
 
@@ -46,6 +47,7 @@ PiNAS/
 │   ├── 05-fan-control-setup.sh   # Fan control setup
 │   ├── 06-nginx-setup.sh         # Nginx web server setup
 │   ├── 07-homepage-setup.sh      # System monitor homepage setup
+│   ├── 08-uxplay-setup.sh        # UxPlay AirPlay server setup
 │   ├── 99-update.sh              # Update script for existing installations
 │   ├── README.md                 # Detailed setup documentation
 │   └── raw-bash-history.txt      # Original command history
@@ -84,7 +86,7 @@ sudo ./99-update.sh
 This will:
 
 - Pull latest changes from git
-- Check and install required system packages (nginx, etc.)
+- Check and install required system packages (nginx, uxplay, etc.)
 - Update application files
 - Restart affected services
 - **Safe for production** (won't modify network/Samba/Tailscale configs)
@@ -148,6 +150,15 @@ This will:
 - Mobile responsive design
 - btop-inspired terminal aesthetic
 
+### UxPlay AirPlay Server
+
+- Wireless media streaming from iOS and macOS devices
+- Audio output to device 0
+- Manual start/stop control
+- Not enabled for auto-start on boot
+- Start when needed: `sudo systemctl start uxplay.service`
+- Stop when done: `sudo systemctl stop uxplay.service`
+
 ## Usage
 
 ### Accessing Your NAS
@@ -185,6 +196,7 @@ sudo systemctl status pinas-homepage.service
 sudo systemctl status smbd
 sudo systemctl status tailscaled
 sudo systemctl status nginx
+sudo systemctl status uxplay.service
 
 # Restart services
 sudo systemctl restart usb-auto-mount.service
@@ -193,11 +205,16 @@ sudo systemctl restart pinas-homepage.service
 sudo systemctl restart smbd
 sudo systemctl restart nginx
 
+# Start/Stop UxPlay (manual control)
+sudo systemctl start uxplay.service
+sudo systemctl stop uxplay.service
+
 # View logs
 sudo tail -f /var/log/usb-auto-mount.log
 tail -f ~/fan_control_hwpwm.log
 sudo journalctl -u fan_control_hwpwm.service -f
 sudo journalctl -u pinas-homepage.service -f
+sudo journalctl -u uxplay.service -f
 ```
 
 ## Customization
