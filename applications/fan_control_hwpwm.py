@@ -11,7 +11,7 @@ logging.basicConfig(
 )
 
 # --- Mode selection ---
-TWO_SPEED_MODE = True  # Toggle between 2-level mode (True) and variable speed mode (False)
+TWO_SPEED_MODE = False  # Toggle between 2-level mode (True) and variable speed mode (False)
 
 # --- Hardware PWM setup ---
 # GPIO 18 = PWM0 on pwmchip0
