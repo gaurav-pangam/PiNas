@@ -100,20 +100,20 @@ def get_cpu_temp():
     with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
         return int(f.read()) / 1000.0
 
-def temp_to_duty(temp, fan_on_time):
+def temp_to_duty(temp, time_below_cutoff):
     """Convert temperature to PWM duty cycle
 
     Args:
         temp: Current CPU temperature
-        fan_on_time: Time elapsed since fan was turned on (seconds)
+        time_below_cutoff: Time elapsed since temp dropped below FAN_OFF_TEMP (seconds)
 
     Returns:
         Duty cycle percentage (0-100)
     """
     # Check if we should turn off the fan
     if temp <= FAN_OFF_TEMP:
-        # Only turn off if fan has been on for at least MIN_FAN_ON_TIME
-        if fan_on_time >= MIN_FAN_ON_TIME:
+        # Only turn off if temp has been below cutoff for at least MIN_FAN_ON_TIME
+        if time_below_cutoff >= MIN_FAN_ON_TIME:
             return 0  # Turn off fan
         # Otherwise, keep fan running at minimum speed
         if TWO_SPEED_MODE:
@@ -150,21 +150,26 @@ try:
     # Track previous values for smoothing
     prev_duty_cycle = 0
     prev_temp = get_cpu_temp()
-    fan_turned_on_time = None  # Track when fan was last turned on
+    temp_below_cutoff_time = None  # Track when temp dropped below FAN_OFF_TEMP
 
     while True:
         cpu_temp = get_cpu_temp()
         temp_change = abs(cpu_temp - prev_temp)
 
-        # Calculate how long the fan has been on
-        if fan_turned_on_time is None:
-            fan_on_time = 0  # Fan is currently off
+        # Track time below cutoff temperature
+        if cpu_temp <= FAN_OFF_TEMP:
+            if temp_below_cutoff_time is None:
+                # Temperature just dropped below cutoff
+                temp_below_cutoff_time = time.time()
+            time_below_cutoff = time.time() - temp_below_cutoff_time
         else:
-            fan_on_time = time.time() - fan_turned_on_time
+            # Temperature is above cutoff, reset timer
+            temp_below_cutoff_time = None
+            time_below_cutoff = 0
 
         # Only recalculate duty cycle if temperature changed significantly
         if temp_change >= TEMP_HYSTERESIS or prev_duty_cycle == 0:
-            duty_cycle = temp_to_duty(cpu_temp, fan_on_time)
+            duty_cycle = temp_to_duty(cpu_temp, time_below_cutoff)
 
             # Only update if duty cycle actually changed
             if duty_cycle != prev_duty_cycle:
@@ -173,12 +178,10 @@ try:
                 # Track fan state transitions
                 if prev_duty_cycle == 0 and duty_cycle > 0:
                     # Fan turning on
-                    fan_turned_on_time = time.time()
                     logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: {duty_cycle}% | Fan ON")
                 elif prev_duty_cycle > 0 and duty_cycle == 0:
                     # Fan turning off
-                    fan_turned_on_time = None
-                    logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: {duty_cycle}% | Fan OFF (ran for {fan_on_time:.1f}s)")
+                    logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: {duty_cycle}% | Fan OFF (temp below cutoff for {time_below_cutoff:.1f}s)")
                 else:
                     # Speed change while running
                     logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: {duty_cycle}%")
