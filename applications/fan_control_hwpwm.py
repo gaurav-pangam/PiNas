@@ -173,17 +173,25 @@ try:
 
             # Only update if duty cycle actually changed
             if duty_cycle != prev_duty_cycle:
-                set_duty_cycle(duty_cycle)
-
                 # Track fan state transitions
                 if prev_duty_cycle == 0 and duty_cycle > 0:
-                    # Fan turning on
-                    logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: {duty_cycle}% | Fan ON")
+                    # Fan turning on - kick start at 100% for 1 second in two-speed mode
+                    if TWO_SPEED_MODE and duty_cycle == TWO_SPEED_LOW_DUTY:
+                        set_duty_cycle(100)
+                        logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: 100% (kick start) | Fan ON")
+                        time.sleep(1)
+                        set_duty_cycle(duty_cycle)
+                        logging.info(f"CPU Temp: {cpu_temp:.1f}°C | PWM Duty: {duty_cycle}% (target speed)")
+                    else:
+                        set_duty_cycle(duty_cycle)
+                        logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: {duty_cycle}% | Fan ON")
                 elif prev_duty_cycle > 0 and duty_cycle == 0:
                     # Fan turning off
+                    set_duty_cycle(duty_cycle)
                     logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: {duty_cycle}% | Fan OFF (temp below cutoff for {time_below_cutoff:.1f}s)")
                 else:
                     # Speed change while running
+                    set_duty_cycle(duty_cycle)
                     logging.info(f"CPU Temp: {cpu_temp:.1f}°C (Δ{temp_change:.1f}°C) | PWM Duty: {duty_cycle}%")
 
                 prev_duty_cycle = duty_cycle
